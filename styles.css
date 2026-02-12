@@ -1,0 +1,136 @@
+:root {
+  --bg: #f6f8fb;
+  --panel: #ffffff;
+  --text: #1f2937;
+  --muted: #4b5563;
+  --accent: #0f766e;
+  --border: #dbe2ea;
+  --changed: #065f46;
+  --same: #6b7280;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, #edf2fb 0%, var(--bg) 100%);
+}
+
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+}
+
+.lead {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.checkbox-row {
+  grid-template-columns: 20px 1fr;
+}
+
+select,
+button {
+  font-size: 0.95rem;
+}
+
+select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status,
+.summary {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+th,
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+td code {
+  white-space: nowrap;
+}
+
+.status-changed {
+  color: var(--changed);
+  font-weight: 700;
+}
+
+.status-same {
+  color: var(--same);
+}
+
+@media (max-width: 600px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

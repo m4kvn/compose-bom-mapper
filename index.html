@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compose BOM 差分比較</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Compose BOM 差分比較</h1>
+      <p class="lead">
+        Android Developers の BOM 対応表を読み込み、2つのBOMバージョン間のライブラリ差分を表示します。
+      </p>
+
+      <section class="panel">
+        <div class="row">
+          <label for="fromBom">比較元</label>
+          <select id="fromBom"></select>
+        </div>
+        <div class="row">
+          <label for="toBom">比較先</label>
+          <select id="toBom"></select>
+        </div>
+        <div class="row checkbox-row">
+          <input id="onlyChanged" type="checkbox" checked />
+          <label for="onlyChanged">変更があるライブラリのみ表示</label>
+        </div>
+        <div class="actions">
+          <button id="loadBtn" type="button">データ取得</button>
+          <button id="compareBtn" type="button">比較する</button>
+        </div>
+        <p id="status" class="status"></p>
+      </section>
+
+      <section class="panel">
+        <h2>差分</h2>
+        <p id="summary" class="summary"></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Library</th>
+                <th>比較元</th>
+                <th>比較先</th>
+                <th>状態</th>
+              </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>メモ</h2>
+        <ul>
+          <li>取得元URL: <code>https://developer.android.com/develop/ui/compose/bom/bom-mapping.md.txt?hl=ja</code></li>
+          <li>ブラウザは同一オリジンAPI（<code>/api/compose-bom-data</code>）のみアクセスします。</li>
+        </ul>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
