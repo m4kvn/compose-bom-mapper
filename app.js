@@ -4,7 +4,6 @@ const state = {
   bomVersions: [],
   mapping: {},
   libraries: [],
-  sourceType: "",
 };
 
 const loadBtn = document.querySelector("#loadBtn");
@@ -34,13 +33,12 @@ async function loadData() {
     state.bomVersions = data.bomVersions || [];
     state.mapping = data.mapping || {};
     state.libraries = data.libraries || [];
-    state.sourceType = data.source || "unknown";
     if (state.bomVersions.length < 2 || state.libraries.length === 0) {
       throw new Error("サーバーから有効なデータを取得できませんでした");
     }
     hydrateSelectors();
     renderComparison();
-    setStatus(`取得成功: ${state.bomVersions.length}個のBOM / source=${state.sourceType}`);
+    setStatus(`取得成功: ${state.bomVersions.length}個のBOM`);
     compareBtn.disabled = false;
   } catch (err) {
     setStatus(`取得失敗: ${err?.message || "不明なエラー"}`, true);
