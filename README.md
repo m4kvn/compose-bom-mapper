@@ -17,7 +17,7 @@ node server.mjs
 ## 備考
 
 - ブラウザから外部URLへ直接アクセスせず、`server.mjs` がサーバー側で取得するため CORS の影響を受けません。
-- 取得元は Android Developers のURLを優先し、失敗時は Maven Central の BOM POM から復元します。
+- 取得元は Android Developers のURLのみを使用します。
 
 ## `bom-mapping.md` について
 

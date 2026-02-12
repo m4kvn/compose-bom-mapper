@@ -14,11 +14,6 @@ const SOURCE_URLS = [
   "https://r.jina.ai/http://developer.android.com/develop/ui/compose/bom/bom-mapping",
 ];
 
-const MAVEN_GAV_API =
-  "https://search.maven.org/solrsearch/select?q=g:%22androidx.compose%22%20AND%20a:%22compose-bom%22&core=gav&rows=300&wt=json";
-const GOOGLE_MAVEN_BASE = "https://dl.google.com/dl/android/maven2";
-const MAVEN_POM_URL = (version) =>
-  `${GOOGLE_MAVEN_BASE}/androidx/compose/compose-bom/${version}/compose-bom-${version}.pom`;
 const BOM_VERSION_RE = /^\d{4}\.\d{2}\.\d{2}(?:[-.][0-9A-Za-z][0-9A-Za-z.-]*)?$/;
 
 const server = http.createServer(async (req, res) => {
@@ -66,6 +61,7 @@ function sendJson(res, status, payload) {
 }
 
 async function loadComposeBomData() {
+  const errors = [];
   for (const url of SOURCE_URLS) {
     try {
       const text = await fetchText(url);
@@ -80,79 +76,24 @@ async function loadComposeBomData() {
       console.warn(
         `[compose-bom] URL parse failed (valid BOM mapping not found): ${url}`
       );
+      errors.push(`parse failed: ${url}`);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.warn(
         `[compose-bom] URL fetch failed: ${url} :: ${err?.message || "unknown error"}`
       );
+      errors.push(`fetch failed: ${url}`);
     }
   }
-  // eslint-disable-next-line no-console
-  console.warn("[compose-bom] Falling back to Maven source");
-  return loadFromMaven();
-}
-
-async function loadFromMaven() {
-  const gav = await fetchJson(MAVEN_GAV_API).catch(() => null);
-  let versions = unique(
-    (gav?.response?.docs || [])
-      .map((doc) => String(doc?.v || ""))
-      .filter((v) => BOM_VERSION_RE.test(v))
-  )
-    .sort()
-    .reverse();
-
-  if (versions.length < 2) {
-    versions = await loadVersionsFromMavenMetadata();
-  }
-
-  if (versions.length < 2) {
-    throw new Error("BOM一覧を取得できませんでした（Google Maven / Maven API）");
-  }
-
-  const targets = versions.slice(0, 40);
-  const mapping = Object.fromEntries(targets.map((v) => [v, {}]));
-  const libraries = new Set();
-
-  for (const version of targets) {
-    const xml = await fetchText(MAVEN_POM_URL(version));
-    const deps = parseBomPomXml(xml);
-    mapping[version] = deps;
-    Object.keys(deps).forEach((k) => libraries.add(k));
-  }
-
-  return {
-    source: "maven",
-    bomVersions: targets,
-    mapping,
-    libraries: [...libraries].sort(),
-  };
-}
-
-async function loadVersionsFromMavenMetadata() {
-  const xml = await fetchText(
-    `${GOOGLE_MAVEN_BASE}/androidx/compose/compose-bom/maven-metadata.xml`
+  throw new Error(
+    `指定されたURLからBOMデータを取得できませんでした (${errors.length}件失敗)`
   );
-  const versions = unique(
-    (xml.match(/<version>\s*([^<]+?)\s*<\/version>/g) || [])
-      .map((line) => line.replace(/<\/?version>/g, "").trim())
-      .filter((v) => BOM_VERSION_RE.test(v))
-  )
-    .sort()
-    .reverse();
-  return versions;
 }
 
 async function fetchText(url) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
   return res.text();
-}
-
-async function fetchJson(url) {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-  return res.json();
 }
 
 function parseMarkdownMatrix(raw) {
@@ -260,25 +201,6 @@ function parseSelectionOrderedRows(raw) {
 
   if (libraries.length === 0) return null;
   return { bomVersions, mapping, libraries: unique(libraries) };
-}
-
-function parseBomPomXml(xml) {
-  const deps = {};
-  const depBlocks = xml.match(/<dependency>[\s\S]*?<\/dependency>/g) || [];
-  for (const block of depBlocks) {
-    const groupId = extractTag(block, "groupId");
-    const artifactId = extractTag(block, "artifactId");
-    const version = extractTag(block, "version");
-    if (!groupId || !artifactId || !version) continue;
-    if (!groupId.startsWith("androidx.compose")) continue;
-    deps[`${groupId}:${artifactId}`] = version;
-  }
-  return deps;
-}
-
-function extractTag(text, tag) {
-  const m = text.match(new RegExp(`<${tag}>\\s*([^<]+?)\\s*<\\/${tag}>`));
-  return m ? m[1].trim() : "";
 }
 
 function splitMarkdownRow(row) {
