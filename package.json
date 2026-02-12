@@ -1,0 +1,11 @@
+{
+  "name": "compose-bom-mapper",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}
