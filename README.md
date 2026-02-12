@@ -18,3 +18,10 @@ node server.mjs
 
 - ブラウザから外部URLへ直接アクセスせず、`server.mjs` がサーバー側で取得するため CORS の影響を受けません。
 - 取得元は Android Developers のURLを優先し、失敗時は Maven Central の BOM POM から復元します。
+
+## `bom-mapping.md` について
+
+- `bom-mapping.md` は検証用のローカル保存データです。本番の取得処理では直接参照しません。
+- `bom-mapping.md` を使って検証する場合は、対象URL先の内容を自分でダウンロードし、プロジェクトルートに `bom-mapping.md` として配置してください。
+- 現在の実装は、`Make a selection` 行に並ぶ BOM 一覧の順序と、同一 `Library` が表に並ぶ順序を対応付けてパースします。
+- 一部ライブラリは行数が BOM 数より少ないため、その場合は存在する行までを新しい BOM から順に割り当て、残りは未定義（`-` 表示）として扱います。

@@ -69,14 +69,26 @@ async function loadComposeBomData() {
   for (const url of SOURCE_URLS) {
     try {
       const text = await fetchText(url);
-      const parsed = parseMarkdownMatrix(text) || parseFlatPageText(text);
+      const parsed =
+        parseMarkdownMatrix(text) ||
+        parseSelectionOrderedRows(text) ||
+        parseFlatPageText(text);
       if (parsed && parsed.bomVersions.length >= 2 && parsed.libraries.length > 0) {
         return { source: "url", ...parsed };
       }
-    } catch {
-      // continue
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[compose-bom] URL parse failed (valid BOM mapping not found): ${url}`
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[compose-bom] URL fetch failed: ${url} :: ${err?.message || "unknown error"}`
+      );
     }
   }
+  // eslint-disable-next-line no-console
+  console.warn("[compose-bom] Falling back to Maven source");
   return loadFromMaven();
 }
 
@@ -145,23 +157,28 @@ async function fetchJson(url) {
 
 function parseMarkdownMatrix(raw) {
   const lines = raw.split(/\r?\n/);
-  const headerIndex = lines.findIndex((line) => line.includes("|") && /Library|ライブラリ/i.test(line));
+  const headerIndex = lines.findIndex((line) => {
+    if (!line.includes("|")) return false;
+    const cells = splitMarkdownRow(line);
+    const versions = cells.map(extractBomVersion).filter(Boolean);
+    return versions.length >= 2;
+  });
   if (headerIndex === -1) return null;
 
-  const headerCells = splitMarkdownRow(lines[headerIndex]);
-  const bomVersions = headerCells.filter((c) => BOM_VERSION_RE.test(c));
+  const headerCells = splitMarkdownRow(lines[headerIndex]).map(normalizeMarkdownCell);
+  const bomVersions = unique(headerCells.map(extractBomVersion).filter(Boolean));
   if (bomVersions.length < 2) return null;
 
   const mapping = Object.fromEntries(bomVersions.map((v) => [v, {}]));
   const libraries = [];
   for (let i = headerIndex + 1; i < lines.length; i += 1) {
     if (!lines[i].includes("|")) continue;
-    const cells = splitMarkdownRow(lines[i]);
-    const artifact = cells[0]?.trim() || "";
+    const cells = splitMarkdownRow(lines[i]).map(normalizeMarkdownCell);
+    const artifact = cells[0] || "";
     if (!/^androidx\.compose\.[\w.-]+:[\w.-]+$/.test(artifact)) continue;
     libraries.push(artifact);
     for (let j = 0; j < bomVersions.length; j += 1) {
-      const version = cells[j + 1]?.trim() || "";
+      const version = normalizeMarkdownCell(cells[j + 1] || "");
       if (isVersionString(version)) mapping[bomVersions[j]][artifact] = version;
     }
   }
@@ -205,6 +222,46 @@ function parseFlatPageText(raw) {
   return { bomVersions, mapping, libraries: unique(libraries) };
 }
 
+function parseSelectionOrderedRows(raw) {
+  const lines = raw.split(/\r?\n/);
+  const selectionLine = lines.find((line) => /Make a selection/i.test(line));
+  if (!selectionLine) return null;
+
+  const bomVersions = unique(
+    (selectionLine.match(/\b\d{4}\.\d{2}\.\d{2}(?:[-.][0-9A-Za-z][0-9A-Za-z.-]*)?\b/g) || [])
+      .filter((v) => BOM_VERSION_RE.test(v))
+  );
+  if (bomVersions.length < 2) return null;
+
+  const mapping = Object.fromEntries(bomVersions.map((v) => [v, {}]));
+  const byLibrary = new Map();
+
+  for (const line of lines) {
+    if (!line.includes("|")) continue;
+    const cells = splitMarkdownRow(line).map(normalizeMarkdownCell);
+    const artifact = cells[0] || "";
+    const version = cells[1] || "";
+    if (!/^androidx\.compose\.[\w.-]+:[\w.-]+$/.test(artifact)) continue;
+    if (!isVersionString(version)) continue;
+    if (!byLibrary.has(artifact)) byLibrary.set(artifact, []);
+    byLibrary.get(artifact).push(version);
+  }
+
+  if (byLibrary.size === 0) return null;
+
+  const libraries = [];
+  for (const [artifact, versions] of byLibrary) {
+    if (versions.length < 2 || versions.length > bomVersions.length) continue;
+    libraries.push(artifact);
+    for (let i = 0; i < versions.length; i += 1) {
+      mapping[bomVersions[i]][artifact] = versions[i];
+    }
+  }
+
+  if (libraries.length === 0) return null;
+  return { bomVersions, mapping, libraries: unique(libraries) };
+}
+
 function parseBomPomXml(xml) {
   const deps = {};
   const depBlocks = xml.match(/<dependency>[\s\S]*?<\/dependency>/g) || [];
@@ -231,6 +288,22 @@ function splitMarkdownRow(row) {
     .replace(/\|$/, "")
     .split("|")
     .map((c) => c.trim());
+}
+
+function normalizeMarkdownCell(value) {
+  return String(value)
+    .trim()
+    .replace(/^\[(.+?)\]\(.+\)$/, "$1")
+    .replace(/^`(.+)`$/, "$1")
+    .replace(/\u00a0/g, " ")
+    .trim();
+}
+
+function extractBomVersion(value) {
+  const normalized = normalizeMarkdownCell(value);
+  const m = normalized.match(/\d{4}\.\d{2}\.\d{2}(?:[-.][0-9A-Za-z][0-9A-Za-z.-]*)?/);
+  const v = m ? m[0] : "";
+  return BOM_VERSION_RE.test(v) ? v : "";
 }
 
 function isVersionString(value) {
