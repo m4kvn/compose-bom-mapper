@@ -130,11 +130,22 @@ button {
 select {
   width: 100%;
   padding: 9px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(76, 230, 255, 0.7);
   border-radius: 10px;
-  background: rgba(3, 11, 28, 0.72);
+  background: transparent;
   color: var(--text);
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+  box-shadow: 0 0 16px rgba(76, 230, 255, 0.2);
+  transition: border-color 140ms ease, box-shadow 140ms ease, color 140ms ease;
+}
+
+#fromBom {
+  color: var(--neon-cyan);
+}
+
+#toBom {
+  color: var(--neon-pink);
+  border-color: rgba(255, 77, 227, 0.78);
+  box-shadow: 0 0 16px rgba(255, 77, 227, 0.2);
 }
 
 select:focus,
@@ -164,13 +175,17 @@ button {
 }
 
 #loadBtn {
-  background: linear-gradient(120deg, var(--neon-cyan) 0%, #93f5ff 100%);
-  box-shadow: 0 0 18px rgba(76, 230, 255, 0.36);
+  background: transparent;
+  color: #9db0c7;
+  border-color: rgba(157, 176, 199, 0.52);
+  box-shadow: 0 0 12px rgba(130, 156, 188, 0.14);
 }
 
 #compareBtn {
-  background: linear-gradient(120deg, var(--neon-pink) 0%, #ffa6f2 100%);
-  box-shadow: 0 0 18px rgba(255, 77, 227, 0.34);
+  background: transparent;
+  color: #9db0c7;
+  border-color: rgba(157, 176, 199, 0.52);
+  box-shadow: 0 0 12px rgba(130, 156, 188, 0.14);
 }
 
 button:hover:not(:disabled) {
