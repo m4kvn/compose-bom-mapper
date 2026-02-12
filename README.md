@@ -1,5 +1,7 @@
 # Compose BOM Mapper
 
+![image](image.png)
+
 Android Compose BOM のマッピングデータを使い、2つのBOMバージョンの差分を比較するシンプルなWebサイトです。
 
 ## 使い方

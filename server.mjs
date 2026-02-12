@@ -52,6 +52,7 @@ function contentTypeByExt(ext) {
   if (ext === ".js") return "text/javascript; charset=utf-8";
   if (ext === ".css") return "text/css; charset=utf-8";
   if (ext === ".json") return "application/json; charset=utf-8";
+  if (ext === ".ico") return "image/x-icon";
   return "application/octet-stream";
 }
 
