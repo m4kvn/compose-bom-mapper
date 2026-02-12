@@ -124,7 +124,7 @@ function parseMarkdownMatrix(raw) {
     }
   }
   if (libraries.length === 0) return null;
-  return { bomVersions, mapping, libraries: unique(libraries) };
+  return { bomVersions, mapping, libraries: unique(libraries), releaseNotes: {} };
 }
 
 function parseFlatPageText(raw) {
@@ -160,7 +160,7 @@ function parseFlatPageText(raw) {
     }
   }
   if (libraries.length === 0) return null;
-  return { bomVersions, mapping, libraries: unique(libraries) };
+  return { bomVersions, mapping, libraries: unique(libraries), releaseNotes: {} };
 }
 
 function parseSelectionOrderedRows(raw) {
@@ -176,16 +176,23 @@ function parseSelectionOrderedRows(raw) {
 
   const mapping = Object.fromEntries(bomVersions.map((v) => [v, {}]));
   const byLibrary = new Map();
+  const releaseNotes = {};
 
   for (const line of lines) {
     if (!line.includes("|")) continue;
-    const cells = splitMarkdownRow(line).map(normalizeMarkdownCell);
-    const artifact = cells[0] || "";
-    const version = cells[1] || "";
+    const rawCells = splitMarkdownRow(line);
+    const artifact = normalizeMarkdownCell(rawCells[0] || "");
+    const version = normalizeMarkdownCell(rawCells[1] || "");
+    const releaseNoteCell = rawCells[2] || "";
     if (!/^androidx\.compose\.[\w.-]+:[\w.-]+$/.test(artifact)) continue;
     if (!isVersionString(version)) continue;
     if (!byLibrary.has(artifact)) byLibrary.set(artifact, []);
     byLibrary.get(artifact).push(version);
+    const releaseNote = extractMarkdownLink(releaseNoteCell);
+    if (releaseNote) {
+      if (!releaseNotes[artifact]) releaseNotes[artifact] = {};
+      releaseNotes[artifact][version] = releaseNote;
+    }
   }
 
   if (byLibrary.size === 0) return null;
@@ -200,7 +207,7 @@ function parseSelectionOrderedRows(raw) {
   }
 
   if (libraries.length === 0) return null;
-  return { bomVersions, mapping, libraries: unique(libraries) };
+  return { bomVersions, mapping, libraries: unique(libraries), releaseNotes };
 }
 
 function splitMarkdownRow(row) {
@@ -234,4 +241,21 @@ function isVersionString(value) {
 
 function unique(list) {
   return [...new Set(list)];
+}
+
+function extractMarkdownLink(value) {
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const markdownLink = raw.match(/^\[(.+?)\]\((https?:\/\/[^\s)]+)\)$/);
+  if (markdownLink) {
+    return { label: markdownLink[1].trim(), url: markdownLink[2].trim() };
+  }
+
+  const plainUrl = raw.match(/^(https?:\/\/\S+)$/);
+  if (plainUrl) {
+    return { label: plainUrl[1], url: plainUrl[1] };
+  }
+
+  return null;
 }

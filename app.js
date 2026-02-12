@@ -4,6 +4,7 @@ const state = {
   bomVersions: [],
   mapping: {},
   libraries: [],
+  releaseNotes: {},
 };
 
 const loadBtn = document.querySelector("#loadBtn");
@@ -33,6 +34,7 @@ async function loadData() {
     state.bomVersions = data.bomVersions || [];
     state.mapping = data.mapping || {};
     state.libraries = data.libraries || [];
+    state.releaseNotes = data.releaseNotes || {};
     if (state.bomVersions.length < 2 || state.libraries.length === 0) {
       throw new Error("サーバーから有効なデータを取得できませんでした");
     }
@@ -85,8 +87,8 @@ function renderComparison() {
       (row) => `
       <tr class="${row.changed ? "library-row-changed" : ""}">
         <td><code>${escapeHtml(row.lib)}</code></td>
-        <td><code>${escapeHtml(row.fromVer)}</code></td>
-        <td><code>${escapeHtml(row.toVer)}</code></td>
+        <td>${renderVersionCell(row.lib, row.fromVer)}</td>
+        <td>${renderVersionCell(row.lib, row.toVer)}</td>
         <td class="${row.changed ? "status-changed" : "status-same"}">${row.changed ? "変更あり" : "変更なし"}</td>
       </tr>`
     )
@@ -107,6 +109,24 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function renderVersionCell(lib, version) {
+  const note = state.releaseNotes[lib]?.[version] || null;
+  const safeUrl = sanitizeHttpUrl(note?.url || "");
+  const versionHtml = `<code>${escapeHtml(version)}</code>`;
+  if (!safeUrl) return versionHtml;
+  return `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">${versionHtml}</a>`;
+}
+
+function sanitizeHttpUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+    return parsed.toString();
+  } catch {
+    return "";
+  }
 }
 
 loadData();
