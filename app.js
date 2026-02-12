@@ -85,7 +85,7 @@ function renderComparison() {
   resultBody.innerHTML = rows
     .map(
       (row) => `
-      <tr>
+      <tr class="${row.changed ? "library-row-changed" : ""}">
         <td><code>${escapeHtml(row.lib)}</code></td>
         <td><code>${escapeHtml(row.fromVer)}</code></td>
         <td><code>${escapeHtml(row.toVer)}</code></td>

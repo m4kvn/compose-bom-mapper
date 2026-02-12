@@ -7,6 +7,7 @@
   --border: #dbe2ea;
   --changed: #065f46;
   --same: #6b7280;
+  --changed-row: #ecfdf5;
 }
 
 * {
@@ -126,6 +127,10 @@ td code {
 
 .status-same {
   color: var(--same);
+}
+
+.library-row-changed td {
+  background: var(--changed-row);
 }
 
 @media (max-width: 600px) {
